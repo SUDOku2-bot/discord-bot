@@ -1,3 +1,2 @@
-[owner]
-# The ID MUST be a string
-ID = "111111111111111111"
+[paths]
+cogs = "./cogs"
