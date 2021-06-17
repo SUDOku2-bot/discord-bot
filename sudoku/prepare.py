@@ -1,4 +1,5 @@
 import glob
+import os
 import sys
 
 import toml
@@ -36,4 +37,9 @@ def add_cogs_to_bot(bot: commands.Bot, settings: dict, cogs: list):
 
 
 def env_to_settings(settings: dict):
-    pass
+    owner = {}
+    if 'owner' in settings.keys():
+        owner = settings['owner']
+
+    owner['id'] = os.getenv("OWNER_ID")
+    settings['owner'] = owner

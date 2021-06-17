@@ -1,3 +1,5 @@
+import re
+
 from discord.ext import commands
 
 
@@ -25,6 +27,10 @@ class Internals(commands.Cog):
             await ctx.send(f"Cog `{cog_name}` is NOT loaded")
             return
 
+        if cog_name == self.__class__.__name__:
+            await ctx.send(f"Cog `{cog_name}` cannot be unloaded")
+            return
+
         self.bot.remove_cog(cog_name)
         await ctx.send(f"Cog `{cog_name}` has been removed")
 
@@ -42,9 +48,41 @@ class Internals(commands.Cog):
 
     @commands.command(aliases=['addcog', 'add_cog', 'mkcog'])
     async def load_cog(self, ctx: commands.Context, cog_name: str):
+        """Opens the file named {cog_name}.py and executes the init_class() function in it.
+        Adds the corresponding cog Class to the loaded Cogs
+        """
+
         if not self.is_bot_owner(str(ctx.author.id)):
             await ctx.send("This command is reserved to the bot owner")
             return
+
+        if cog_name in self.bot.cogs:
+            await ctx.send(f"Cog `{cog_name}` already loaded")
+            return
+
+        if cog_name == self.__class__.__name__:
+            await ctx.send(f"Cog `{cog_name}` cannot be loaded")
+            return
+
+        cog_name = cog_name.lower()
+
+        module_path: str = self.settings['paths']['cogs'].replace('./', '').replace('//', '/')
+        if module_path[-1] == '/':
+            module_path = module_path[:-1]
+        module_name = f"{module_path.replace('/', '.')}.{cog_name}"
+
+        try:
+            module = __import__(module_name, fromlist=['*'])
+        except ModuleNotFoundError as err:
+            await ctx.send(f"Failed to import {module_name}\n{err}")
+            return
+
+        if module is None:
+            await ctx.send(f"Failed to import {cog_name}")
+            return
+
+        self.bot.add_cog(module.init_class(self.bot, self.settings))
+        await ctx.send(f"Cog {cog_name} successfully loaded")
 
 
 def init_class(bot: commands.Bot, settings: dict):
