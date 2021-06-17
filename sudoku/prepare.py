@@ -33,3 +33,7 @@ def add_cogs_to_bot(bot: commands.Bot, settings: dict, cogs: list):
             bot.add_cog(cog.init_class(bot, settings))
         except AttributeError:
             print("One of the imported cogs is missing `init_class(bot)`")
+
+
+def env_to_settings(settings: dict):
+    pass
