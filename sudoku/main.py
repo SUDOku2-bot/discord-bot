@@ -1,12 +1,14 @@
 import os
 import sys
 
+import toml as toml
 from discord.ext import commands
 
 from sudoku.prepare import cogs_modules
 from sudoku.servers.config import server_prefix
 
 cogs_folder = "./cogs"
+settings_file = "./settings.toml"
 
 token = os.getenv("BOT_TOKEN")
 
@@ -20,9 +22,13 @@ except ModuleNotFoundError as err:
     print(f"Error importing module:\n{err}")
     sys.exit(-1)
 
+settings: dict
+with open(settings_file, "r") as f:
+    settings = toml.load(f)
+
 for cog in cogs:
     try:
-        bot.add_cog(cog.init_class(bot))
+        bot.add_cog(cog.init_class(bot, settings))
     except AttributeError:
         print("One of the imported cogs is missing `init_class(bot)`")
 

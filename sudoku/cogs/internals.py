@@ -10,5 +10,5 @@ class Greetings(commands.Cog):
         print(f"Successfully Connected as {self.bot.user.display_name}")
 
 
-def init_class(bot: commands.Bot):
+def init_class(bot: commands.Bot, settings: dict):
     return Greetings(bot)
