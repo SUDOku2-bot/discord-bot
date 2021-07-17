@@ -1,3 +1,4 @@
 # NON USER SETTINGS ONLY
 [paths]
-cogs = "./cogs"
+cogs = "./sudoku/cogs"
+logs = "./logs"

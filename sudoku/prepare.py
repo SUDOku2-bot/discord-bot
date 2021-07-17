@@ -1,6 +1,7 @@
 import glob
 import os
 import sys
+from pathlib import Path
 
 import toml
 from discord.ext import commands
@@ -14,6 +15,10 @@ def cogs_modules(path: str) -> list:
 def get_settings(path: str) -> dict:
     with open(path, "r") as f:
         return toml.load(f)
+
+
+def init_logs(path: str):
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 
 def cogs_list(path: str) -> list:
@@ -43,3 +48,10 @@ def env_to_settings(settings: dict):
 
     owner['id'] = os.getenv("OWNER_ID")
     settings['owner'] = owner
+
+    if os.getenv("API_URL") is None:
+        print("Please set the API_URL Env var", file=sys.stderr)
+        return False
+
+    settings['API_URL'] = os.getenv("API_URL")
+    return True
