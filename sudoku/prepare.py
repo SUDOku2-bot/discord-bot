@@ -28,7 +28,7 @@ def cogs_list(path: str) -> list:
     return cogs
 
 
-def add_cogs_to_bot(bot: commands.Bot, settings: dict, cogs: list):
+def add_cogs_to_bot(bot: commands.AutoShardedBot, settings: dict, cogs: list):
     for cog in cogs:
         try:
             bot.add_cog(cog.init_class(bot, settings))
