@@ -42,7 +42,10 @@ class Leveling(commands.Cog):
         # Level up happened
         await self.on_level_up(message, res['level'])
 
-        await message.channel.send(f"<@{message.author.id}> is now level {res['level']}")
+        embed = discord.Embed(title=f"{message.author.display_name()} Level Up!",
+                              description=f"<@{message.author.id}> is now level {res['level']}")
+        embed.set_thumbnail(url=f"{message.author.avatar_url()}")
+        await message.send(embed=embed)
 
     async def on_level_up(self, message: discord.Message, level: int):
         response = requests.get(f"{self.settings['API_URL']}levels/role", params={
