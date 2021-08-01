@@ -1,6 +1,9 @@
 import re
 
+import discord
 from discord.ext import commands
+
+from sudoku import server_prefix
 
 
 class Internals(commands.Cog):
@@ -83,6 +86,11 @@ class Internals(commands.Cog):
 
         self.bot.add_cog(module.init_class(self.bot, self.settings))
         await ctx.send(f"Cog {cog_name} successfully loaded")
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if self.bot.user.mentioned_in(message):
+            await message.reply(f"Hello, your server's prefix is: `{server_prefix(self.bot, message)}`")
 
 
 def init_class(bot: commands.Bot, settings: dict):

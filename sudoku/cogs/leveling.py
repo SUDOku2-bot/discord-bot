@@ -7,6 +7,7 @@ from discord.ext import commands
 from discord.ext.commands import has_permissions
 
 from sudoku.api_utils import patch_request, error_chk
+from sudoku import logger, server_prefix
 
 
 class Leveling(commands.Cog):
@@ -18,6 +19,8 @@ class Leveling(commands.Cog):
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
+        if message.content.startswith(server_prefix(self.bot, message)):
+            return
 
         api_url = self.settings['API_URL'] + "levels/xp"
         response = patch_request(api_url, data={
@@ -28,8 +31,7 @@ class Leveling(commands.Cog):
         res: dict = json.loads(response.text)
 
         if error_chk(res):
-            with open(self.settings['paths']['logs'], 'a+') as f:
-                f.write(f"[ERROR] leveling.on_message | [{message.author.id}] : [{message.content}]")
+            logger.error(f"leveling.on_message | [{message.author.id}] : [{message.content}]")
 
         if "trigger" not in res.keys():
             return
@@ -84,10 +86,14 @@ class Leveling(commands.Cog):
 
     @commands.command(aliases=['roleup', 'levels_role', 'levelrole', 'levelsrole'])
     @has_permissions(ban_members=True)
-    async def level_role(self, ctx: commands.Context, mode: str, role: discord.Role = None, level: int = None):
+    async def level_role(self, ctx: commands.Context, mode: str = None, role: discord.Role = None, level: int = None):
+        if mode is None:
+            await ctx.send(f"Usage: `{ctx.message.content} <add/remove/list> <role_id> <level>`")
+            return
+
         if mode == "add":
             if level is None or role is None:
-                await ctx.send("Usage: <add/remove> <role_id> <level>")
+                await ctx.send("Usage: add <role_id> <level>")
                 return
 
             body = {
@@ -109,7 +115,45 @@ class Leveling(commands.Cog):
 
             await ctx.send(f"Set Automatic Role setup for role: `{role}` at level `{level}`")
         elif mode == "remove":
-            pass
+            if role is None:
+                await ctx.send("Usage: remove <role_id>")
+                return
+
+            body = {
+                "server_id": str(ctx.guild.id),
+                "role_id": str(role.id),
+            }
+
+            headers = {
+                "content-type": "application/json"
+            }
+
+            response = requests.delete(f"{self.settings['API_URL']}levels/role", data=json.dumps(body), headers=headers)
+            res_json = response.json()
+
+            if error_chk(res_json):
+                await ctx.send(f"Error while executing the command: {res_json['error']}")
+                return
+
+            await ctx.send(f"Automatic Role removed for role: `{role}`")
+        elif mode == "list":
+            params = {
+                "server_id": str(ctx.guild.id)
+            }
+
+            response = requests.get(f"{self.settings['API_URL']}levels/role", params=params)
+            res_json = response.json()
+
+            if error_chk(res_json):
+                await ctx.reply(f"Error while executing the command: {res_json['error']}")
+                return
+
+            message: str = ""
+            for role_id in res_json['content']:
+                role: discord.Role = get(ctx.guild.roles, id=int(role_id[0]))
+                message += f"`{role.name}` => lvl `{role_id[1]}`\n"
+
+            await ctx.reply(message if len(message) > 1 else "No roles found")
 
 
 def init_class(bot: commands.Bot, settings: dict):
